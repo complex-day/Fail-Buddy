@@ -78,6 +78,8 @@ export default function UnlockModal({
 
   async function handleContributeSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSubmitting) return;
+
     const trimmedName = studentName.trim();
     const trimmedResource = resourceValue.trim();
 
@@ -95,12 +97,48 @@ export default function UnlockModal({
     setErrorMsg(null);
     setIsSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    try {
+      const response = await fetch("/api/contribute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          student_name: trimmedName,
+          subject_code: subject.code,
+          resource_type: resourceType,
+          resource_link_or_note: trimmedResource,
+        }),
+      });
 
-    setIsSubmitting(false);
-    setStudentName("");
-    setResourceValue("");
-    onUnlocked("CONTRIBUTE", trimmedName);
+      if (!response.ok) {
+        let serverError = "Could not save contribution. Please try again.";
+        try {
+          const data: unknown = await response.json();
+          if (
+            typeof data === "object" &&
+            data !== null &&
+            "error" in data &&
+            typeof data.error === "string" &&
+            data.error.trim().length > 0
+          ) {
+            serverError = data.error;
+          }
+        } catch {
+          // Ignore non-JSON error responses
+        }
+        setErrorMsg(serverError);
+        return;
+      }
+
+      setStudentName("");
+      setResourceValue("");
+      onUnlocked("CONTRIBUTE", trimmedName);
+    } catch {
+      setErrorMsg(
+        "Network error while submitting. Please check your connection and try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -266,7 +304,7 @@ export default function UnlockModal({
                   if (errorMsg) setErrorMsg(null);
                 }}
                 placeholder="e.g. Meet Patel"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none transition"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none transition"
               />
             </div>
 
@@ -312,7 +350,7 @@ export default function UnlockModal({
                   if (errorMsg) setErrorMsg(null);
                 }}
                 placeholder="Paste Drive link or share a repeated mid-sem question / quick tip..."
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none transition"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none transition"
               />
             </div>
 
