@@ -1,103 +1,107 @@
-import Image from "next/image";
+import { BadgeCheck, MessageCircleHeart } from "lucide-react";
+import HomeSubjectExplorer from "@/components/HomeSubjectExplorer";
+import { MOCK_SUBJECTS } from "@/data/mockData";
 
-export default function Home() {
+const WHATSAPP_SHARE_TEXT = encodeURIComponent(
+  "Zero Fail GTU Passing Kit! Get verified IMPs, Assignment answers & Topper Notes with zero login on Fail Buddy:"
+);
+
+function PixelShieldFlameIcon() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <svg
+      viewBox="0 0 8 8"
+      className="h-full w-full"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      {/* Crisp 8x8 pixel-mosaic shield frame */}
+      <rect x="1" y="0" width="6" height="1" fill="#E2E8F0" />
+      <rect x="0" y="1" width="1" height="4" fill="#E2E8F0" />
+      <rect x="7" y="1" width="1" height="4" fill="#E2E8F0" />
+      <rect x="1" y="5" width="1" height="1" fill="#E2E8F0" />
+      <rect x="6" y="5" width="1" height="1" fill="#E2E8F0" />
+      <rect x="2" y="6" width="1" height="1" fill="#CBD5E1" />
+      <rect x="5" y="6" width="1" height="1" fill="#CBD5E1" />
+      <rect x="3" y="7" width="2" height="1" fill="#94A3B8" />
+      {/* Inner emerald pixel flame */}
+      <rect x="4" y="1" width="1" height="1" fill="#6EE7B7" />
+      <rect x="3" y="2" width="2" height="1" fill="#34D399" />
+      <rect x="2" y="3" width="4" height="2" fill="#10B981" />
+      <rect x="3" y="4" width="2" height="1" fill="#ECFDF5" />
+      <rect x="3" y="5" width="2" height="2" fill="#059669" />
+    </svg>
+  );
+}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+export default function HomePage() {
+  const whatsappShareUrl = `https://wa.me/?text=${WHATSAPP_SHARE_TEXT}`;
+
+  return (
+    <div className="min-h-dvh bg-pixel-canvas text-slate-900">
+      <main className="max-w-md mx-auto px-4 pt-5 pb-28">
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 shrink-0 rounded-xl bg-slate-900 p-1.5 shadow-xs">
+              <PixelShieldFlameIcon />
+            </div>
+            <div>
+              <h1 className="text-lg font-extrabold tracking-tight text-slate-900 leading-tight">
+                Fail Buddy
+              </h1>
+              <p className="text-xs font-medium text-slate-500">
+                Zero Fail GTU Kit
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+              aria-hidden="true"
             />
-            Deploy now
-          </a>
+            Zero Login
+          </span>
+        </header>
+
+        <section
+          aria-label="Verification trust strip"
+          className="mt-4 relative overflow-hidden rounded-2xl"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute -inset-4 lens-orb"
+          />
+          <div className="relative rounded-2xl lens-glass px-3.5 py-3 flex items-center gap-2.5">
+            <BadgeCheck
+              className="h-4 w-4 shrink-0 text-indigo-600"
+              aria-hidden="true"
+            />
+            <p className="text-[13px] leading-snug font-medium text-slate-700">
+              Verified from College Assignments, Past Mid-Sem Papers &amp;
+              Topper Notes
+            </p>
+          </div>
+        </section>
+
+        <HomeSubjectExplorer subjects={MOCK_SUBJECTS} />
+      </main>
+
+      <div className="fixed bottom-4 inset-x-0 z-20 px-4 pointer-events-none">
+        <div className="max-w-md mx-auto pointer-events-auto">
           <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href={whatsappShareUrl}
             target="_blank"
             rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900/95 backdrop-blur-md px-4 py-3.5 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(15,23,42,0.45)] ring-1 ring-white/10 active:scale-[0.98] transition"
           >
-            Read our docs
+            <MessageCircleHeart
+              className="h-4 w-4 text-emerald-400"
+              aria-hidden="true"
+            />
+            Share Fail Buddy on WhatsApp
           </a>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
