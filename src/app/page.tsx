@@ -1,6 +1,6 @@
 import { BadgeCheck, MessageCircleHeart } from "lucide-react";
 import HomeSubjectExplorer from "@/components/HomeSubjectExplorer";
-import { MOCK_SUBJECTS } from "@/data/mockData";
+import { getSubjects } from "@/lib/data";
 
 const WHATSAPP_SHARE_TEXT = encodeURIComponent(
   "Zero Fail GTU Passing Kit! Get verified IMPs, Assignment answers & Topper Notes with zero login on Fail Buddy:"
@@ -33,7 +33,8 @@ function PixelShieldFlameIcon() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const subjects = await getSubjects();
   const whatsappShareUrl = `https://wa.me/?text=${WHATSAPP_SHARE_TEXT}`;
 
   return (
@@ -83,7 +84,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <HomeSubjectExplorer subjects={MOCK_SUBJECTS} />
+        <HomeSubjectExplorer subjects={subjects} />
       </main>
 
       <div className="fixed bottom-4 inset-x-0 z-20 px-4 pointer-events-none">

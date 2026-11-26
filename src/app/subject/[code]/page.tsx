@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import SubjectHub from "@/components/SubjectHub";
-import { MOCK_MATERIALS, MOCK_SUBJECTS } from "@/data/mockData";
+import { getSubjectWithMaterials } from "@/lib/data";
 
 interface SubjectPageProps {
   params: Promise<{ code: string }>;
@@ -10,10 +10,7 @@ interface SubjectPageProps {
 export default async function SubjectPage({ params }: SubjectPageProps) {
   const { code } = await params;
 
-  const subject = MOCK_SUBJECTS.find((item) => item.code === code);
-  const materials = MOCK_MATERIALS.filter(
-    (item) => item.subject_code === code
-  );
+  const { subject, materials } = await getSubjectWithMaterials(code);
 
   if (!subject) {
     return (
