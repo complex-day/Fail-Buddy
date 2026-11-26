@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Sparkles } from "lucide-react";
+import { Check, Copy } from "lucide-react";
+import TopperTipCard from "@/components/TopperTipCard";
 import type { Material } from "@/lib/supabase";
 
 interface AssignmentCardProps {
@@ -73,34 +74,23 @@ export default function AssignmentCard({ material }: AssignmentCardProps) {
         </span>
       </div>
 
-      <h3 className="mt-2.5 text-[15px] font-bold text-slate-900 leading-snug">
+      <h3 className="mt-2.5 min-w-0 break-words text-[15px] font-bold text-slate-900 leading-snug">
         {material.question}
       </h3>
 
       <div className="mt-3 border-t border-slate-100 pt-3">
-        <p className="text-base leading-relaxed text-slate-700 whitespace-pre-line">
+        <p className="min-w-0 break-words text-base leading-relaxed text-slate-700 whitespace-pre-line">
           {material.answer}
         </p>
 
-        {material.topper_tip && (
-          <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/80 px-3 py-2.5 text-[13px] text-indigo-800">
-            <div className="flex items-center gap-1.5 font-semibold text-indigo-900">
-              <Sparkles
-                className="h-3.5 w-3.5 shrink-0 text-indigo-600"
-                aria-hidden="true"
-              />
-              <span>Topper Exam Tip</span>
-            </div>
-            <p className="mt-1 leading-relaxed">{material.topper_tip}</p>
-          </div>
-        )}
+        <TopperTipCard tip={material.topper_tip} />
       </div>
 
       <div className="mt-3.5 flex items-center justify-end border-t border-slate-100 pt-3">
         <button
           type="button"
           onClick={handleCopy}
-          className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold active:scale-[0.98] transition cursor-pointer ${
+          className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold active:scale-[0.98] transition cursor-pointer ${
             copied
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
               : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"

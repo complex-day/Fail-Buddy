@@ -1,4 +1,4 @@
-import { MOCK_MATERIALS, MOCK_SUBJECTS } from "@/data/mockData";
+import { getMockSubjects, MOCK_MATERIALS } from "@/data/mockData";
 import {
   isSupabaseConfigured,
   supabase,
@@ -10,7 +10,7 @@ function getMockSubjectWithMaterials(code: string): {
   subject: Subject | null;
   materials: Material[];
 } {
-  const subject = MOCK_SUBJECTS.find((item) => item.code === code) ?? null;
+  const subject = getMockSubjects().find((item) => item.code === code) ?? null;
   const materials = subject
     ? MOCK_MATERIALS.filter((item) => item.subject_code === code).sort(
         (a, b) => a.unit - b.unit || a.id - b.id
@@ -19,10 +19,10 @@ function getMockSubjectWithMaterials(code: string): {
   return { subject, materials };
 }
 
-/** Fetch all GTU subjects ordered by nearest exam date, falling back to mock data. */
+/** Fetch all GTU subjects ordered by nearest exam date, falling back to mock data on error. */
 export async function getSubjects(): Promise<Subject[]> {
   if (!isSupabaseConfigured) {
-    return MOCK_SUBJECTS;
+    return getMockSubjects();
   }
 
   try {
@@ -31,18 +31,18 @@ export async function getSubjects(): Promise<Subject[]> {
       .select("*")
       .order("exam_date", { ascending: true });
 
-    if (!error && data && data.length > 0) {
-      return data;
+    if (error) {
+      console.warn(
+        "[data.getSubjects] Falling back to mock subjects:",
+        error.message
+      );
+      return getMockSubjects();
     }
 
-    console.warn(
-      "[data.getSubjects] Falling back to MOCK_SUBJECTS:",
-      error?.message ?? "No subjects returned from Supabase"
-    );
-    return MOCK_SUBJECTS;
+    return data ?? [];
   } catch (err) {
-    console.warn("[data.getSubjects] Falling back to MOCK_SUBJECTS:", err);
-    return MOCK_SUBJECTS;
+    console.warn("[data.getSubjects] Falling back to mock subjects:", err);
+    return getMockSubjects();
   }
 }
 
@@ -51,31 +51,51 @@ export async function getSubjectWithMaterials(code: string): Promise<{
   subject: Subject | null;
   materials: Material[];
 }> {
+  const normalizedCode = code.trim();
+  if (!normalizedCode) {
+    return { subject: null, materials: [] };
+  }
+
   if (!isSupabaseConfigured) {
-    return getMockSubjectWithMaterials(code);
+    return getMockSubjectWithMaterials(normalizedCode);
   }
 
   try {
     const [subjectRes, materialsRes] = await Promise.all([
-      supabase.from("subjects").select("*").eq("code", code).maybeSingle(),
+      supabase
+        .from("subjects")
+        .select("*")
+        .eq("code", normalizedCode)
+        .maybeSingle(),
       supabase
         .from("materials")
         .select("*")
-        .eq("subject_code", code)
+        .eq("subject_code", normalizedCode)
         .order("unit", { ascending: true })
         .order("id", { ascending: true }),
     ]);
 
-    if (subjectRes.error || materialsRes.error) {
+    if (subjectRes.error) {
       console.warn(
-        "[data.getSubjectWithMaterials] Falling back to mock data:",
-        subjectRes.error?.message ?? materialsRes.error?.message
+        "[data.getSubjectWithMaterials] Subject query failed; falling back to mock data:",
+        subjectRes.error.message
       );
-      return getMockSubjectWithMaterials(code);
+      return getMockSubjectWithMaterials(normalizedCode);
     }
 
     if (!subjectRes.data) {
       return { subject: null, materials: [] };
+    }
+
+    if (materialsRes.error) {
+      console.warn(
+        "[data.getSubjectWithMaterials] Materials query failed; returning subject with empty materials:",
+        materialsRes.error.message
+      );
+      return {
+        subject: subjectRes.data,
+        materials: [],
+      };
     }
 
     return {
@@ -87,6 +107,6 @@ export async function getSubjectWithMaterials(code: string): Promise<{
       "[data.getSubjectWithMaterials] Falling back to mock data:",
       err
     );
-    return getMockSubjectWithMaterials(code);
+    return getMockSubjectWithMaterials(normalizedCode);
   }
 }

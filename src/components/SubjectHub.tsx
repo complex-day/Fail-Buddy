@@ -10,6 +10,7 @@ import {
   LockOpen,
   ShieldCheck,
 } from "lucide-react";
+import { formatCountdownBadge } from "@/lib/date";
 import type { Material, Subject } from "@/lib/supabase";
 import AssignmentCard from "@/components/AssignmentCard";
 import DailyTracker from "@/components/DailyTracker";
@@ -19,6 +20,7 @@ import UnlockModal from "@/components/UnlockModal";
 interface SubjectHubProps {
   subject: Subject;
   materials: Material[];
+  todayISO?: string;
 }
 
 type HubTab = "PASSING_KIT" | "ASSIGNMENTS" | "DAILY_PLAN";
@@ -28,29 +30,6 @@ const TABS: { id: HubTab; label: string }[] = [
   { id: "ASSIGNMENTS", label: "Assignments" },
   { id: "DAILY_PLAN", label: "Daily Plan" },
 ];
-
-function getDaysRemaining(examDate: string): { label: string; urgent: boolean } {
-  const [year, month, day] = examDate.split("-").map(Number);
-  if (!year || !month || !day) {
-    return { label: "Soon", urgent: true };
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const exam = new Date(year, month - 1, day);
-  const diffDays = Math.round(
-    (exam.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (diffDays < 0) {
-    return { label: "Done", urgent: false };
-  }
-  if (diffDays === 0) {
-    return { label: "Today", urgent: true };
-  }
-  return { label: `${diffDays}d left`, urgent: diffDays <= 7 };
-}
 
 interface LockedMaterialCardProps {
   material: Material;
@@ -97,7 +76,7 @@ function LockedMaterialCard({ material, onUnlock }: LockedMaterialCardProps) {
         <button
           type="button"
           onClick={onUnlock}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 active:scale-[0.98] transition cursor-pointer"
+          className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 active:scale-[0.98] transition cursor-pointer"
         >
           <LockOpen
             className="h-3.5 w-3.5 text-emerald-400"
@@ -110,7 +89,11 @@ function LockedMaterialCard({ material, onUnlock }: LockedMaterialCardProps) {
   );
 }
 
-export default function SubjectHub({ subject, materials }: SubjectHubProps) {
+export default function SubjectHub({
+  subject,
+  materials,
+  todayISO,
+}: SubjectHubProps) {
   const unlockStorageKey = `fail_buddy_unlocked_${subject.code}`;
 
   const [activeTab, setActiveTab] = useState<HubTab>("PASSING_KIT");
@@ -118,7 +101,7 @@ export default function SubjectHub({ subject, materials }: SubjectHubProps) {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
 
-  const countdown = getDaysRemaining(subject.exam_date);
+  const countdown = formatCountdownBadge(subject.exam_date, todayISO);
 
   const impMaterials = materials.filter((item) => item.type === "IMP");
   const assignmentMaterials = materials.filter(
@@ -168,7 +151,7 @@ export default function SubjectHub({ subject, materials }: SubjectHubProps) {
             <Link
               href="/"
               aria-label="Back to subjects"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs hover:border-slate-300 hover:text-slate-900 active:scale-[0.97] transition"
+              className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs hover:border-slate-300 hover:text-slate-900 active:scale-[0.97] transition"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Link>
@@ -237,7 +220,7 @@ export default function SubjectHub({ subject, materials }: SubjectHubProps) {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className={`rounded-lg px-2 py-1.5 text-xs transition cursor-pointer ${
+                className={`min-h-[44px] rounded-lg px-2 py-2 text-xs transition cursor-pointer ${
                   isActive
                     ? "bg-white text-slate-900 shadow-xs font-semibold"
                     : "font-medium text-slate-600 hover:text-slate-900"
@@ -252,13 +235,13 @@ export default function SubjectHub({ subject, materials }: SubjectHubProps) {
         {/* Tab 1: Passing Kit */}
         {activeTab === "PASSING_KIT" && (
           <section aria-label="Zero-Fail Passing Kit" className="mt-4">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <button
                 type="button"
                 role="switch"
                 aria-checked={mustDoOnly}
                 onClick={() => setMustDoOnly((prev) => !prev)}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition cursor-pointer active:scale-[0.98] ${
+                className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition cursor-pointer active:scale-[0.98] ${
                   mustDoOnly
                     ? "border-emerald-200/90 bg-emerald-50 text-emerald-800"
                     : "border-slate-200 bg-white text-slate-600"
@@ -276,7 +259,7 @@ export default function SubjectHub({ subject, materials }: SubjectHubProps) {
                     }`}
                   />
                 </span>
-                Must-Do Only (12/30 Pass)
+                <span>Must-Do Only ({subject.passing_target})</span>
               </button>
 
               <span className="font-mono text-xs font-semibold text-slate-500 shrink-0">
@@ -297,6 +280,23 @@ export default function SubjectHub({ subject, materials }: SubjectHubProps) {
                     <ImpAccordion key={material.id} material={material} />
                   )
                 )
+              ) : mustDoOnly && impMaterials.length > 0 ? (
+                <div className="card-elevated rounded-2xl p-6 text-center">
+                  <p className="text-sm font-semibold text-slate-800">
+                    No Must-Do IMPs flagged yet
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    All {impMaterials.length} questions for {subject.code} are
+                    available when the Must-Do filter is turned off.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setMustDoOnly(false)}
+                    className="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 active:scale-[0.98] transition cursor-pointer"
+                  >
+                    Show all IMPs
+                  </button>
+                </div>
               ) : (
                 <div className="card-elevated rounded-2xl p-6 text-center">
                   <p className="text-sm font-semibold text-slate-800">
@@ -346,19 +346,24 @@ export default function SubjectHub({ subject, materials }: SubjectHubProps) {
         {/* Tab 3: Anti-Panic Daily Tracker */}
         {activeTab === "DAILY_PLAN" && (
           <section aria-label="Anti-Panic Daily Tracker" className="mt-4">
-            <DailyTracker subject={subject} impMaterials={impMaterials} />
+            <DailyTracker
+              subject={subject}
+              impMaterials={impMaterials}
+              todayISO={todayISO}
+              isUnlocked={isUnlocked}
+            />
           </section>
         )}
       </main>
 
       {/* Floating Glass Bottom Dock when locked items exist and kit is not yet unlocked */}
       {showFloatingUnlockDock && (
-        <div className="fixed bottom-4 inset-x-0 z-20 px-4 pointer-events-none">
+        <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-0 z-20 px-4 pointer-events-none">
           <div className="max-w-md mx-auto pointer-events-auto">
             <button
               type="button"
               onClick={() => setIsUnlockModalOpen(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900/95 backdrop-blur-md px-4 py-3.5 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(15,23,42,0.45)] ring-1 ring-white/10 active:scale-[0.98] transition cursor-pointer"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-slate-900/95 backdrop-blur-md px-4 py-3.5 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(15,23,42,0.45)] ring-1 ring-white/10 active:scale-[0.98] transition cursor-pointer"
             >
               <LockOpen
                 className="h-4 w-4 text-emerald-400"

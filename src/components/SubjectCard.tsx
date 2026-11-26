@@ -1,44 +1,23 @@
 import Link from "next/link";
 import { ChevronRight, ShieldCheck } from "lucide-react";
+import { formatCountdownBadge } from "@/lib/date";
 import type { Subject } from "@/lib/supabase";
 
 interface SubjectCardProps {
   subject: Subject;
+  todayISO?: string;
 }
 
 const TOTAL_METER_BLOCKS = 10;
 const FILLED_METER_BLOCKS = 4;
-
-function getDaysRemaining(examDate: string): { label: string; urgent: boolean } {
-  const [year, month, day] = examDate.split("-").map(Number);
-  if (!year || !month || !day) {
-    return { label: "Soon", urgent: true };
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const exam = new Date(year, month - 1, day);
-  const diffDays = Math.round(
-    (exam.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (diffDays < 0) {
-    return { label: "Done", urgent: false };
-  }
-  if (diffDays === 0) {
-    return { label: "Today", urgent: true };
-  }
-  return { label: `${diffDays}d left`, urgent: diffDays <= 7 };
-}
 
 function getStudyingCount(subject: Subject): number {
   const codeTail = Number(subject.code.slice(-2)) || 10;
   return 24 + subject.unlocked_by.length * 11 + (codeTail % 9);
 }
 
-export default function SubjectCard({ subject }: SubjectCardProps) {
-  const countdown = getDaysRemaining(subject.exam_date);
+export default function SubjectCard({ subject, todayISO }: SubjectCardProps) {
+  const countdown = formatCountdownBadge(subject.exam_date, todayISO);
   const studyingCount = getStudyingCount(subject);
 
   return (

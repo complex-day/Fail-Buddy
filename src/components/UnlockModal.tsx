@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   CheckCircle2,
   MessageCircleHeart,
@@ -23,11 +23,22 @@ interface UnlockModalProps {
 type ModalOption = "WHATSAPP" | "CONTRIBUTE";
 type ResourceType = Contribution["resource_type"];
 
+const SUBMIT_TIMEOUT_MS = 12_000;
+
 const RESOURCE_OPTIONS: { value: ResourceType; label: string }[] = [
   { value: "MID_PAPER", label: "Mid-Sem Paper" },
   { value: "ASSIGNMENT", label: "Assignment" },
   { value: "NOTES", label: "Topper Notes" },
 ];
+
+function isOkPayload(data: unknown): boolean {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "ok" in data &&
+    (data as { ok: unknown }).ok === true
+  );
+}
 
 export default function UnlockModal({
   isOpen,
@@ -41,11 +52,29 @@ export default function UnlockModal({
   const [resourceValue, setResourceValue] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleId = useId();
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      return;
+    }
+
+    setShareUrl(window.location.href);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -54,27 +83,31 @@ export default function UnlockModal({
     }
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) {
     return null;
   }
 
-  function handleWhatsAppShare() {
-    const shareUrl =
-      typeof window !== "undefined" ? window.location.href : "";
-    const message = [
-      `Bhai/Behen, ${subject.name} (${subject.code}) ka Zero Fail GTU Passing Kit + Topper Notes mil gaya (no login)!`,
-      shareUrl,
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-    const whatsappHref = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappHref, "_blank", "noopener,noreferrer");
-    onUnlocked("WHATSAPP");
-  }
+  const shareMessage = [
+    `Bhai/Behen, ${subject.name} (${subject.code}) ka Zero Fail GTU Passing Kit + Topper Notes mil gaya (no login)!`,
+    shareUrl,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
 
   async function handleContributeSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -97,10 +130,20 @@ export default function UnlockModal({
     setErrorMsg(null);
     setIsSubmitting(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    let didTimeout = false;
+
+    timeoutRef.current = setTimeout(() => {
+      didTimeout = true;
+      controller.abort();
+    }, SUBMIT_TIMEOUT_MS);
+
     try {
       const response = await fetch("/api/contribute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           student_name: trimmedName,
           subject_code: subject.code,
@@ -129,14 +172,46 @@ export default function UnlockModal({
         return;
       }
 
+      let successData: unknown = null;
+      try {
+        successData = await response.json();
+      } catch {
+        setErrorMsg(
+          "Unexpected server response. Please check your connection and try again."
+        );
+        return;
+      }
+
+      if (!isOkPayload(successData)) {
+        setErrorMsg(
+          "Unexpected server response. Please check your connection and try again."
+        );
+        return;
+      }
+
       setStudentName("");
       setResourceValue("");
       onUnlocked("CONTRIBUTE", trimmedName);
-    } catch {
-      setErrorMsg(
-        "Network error while submitting. Please check your connection and try again."
-      );
+    } catch (err) {
+      if (didTimeout) {
+        setErrorMsg(
+          "Request timed out. Please check your mobile data or Wi-Fi and try again."
+        );
+      } else if (err instanceof DOMException && err.name === "AbortError") {
+        // Modal closed or unmounted while request was in flight
+      } else {
+        setErrorMsg(
+          "Network error while submitting. Please check your connection and try again."
+        );
+      }
     } finally {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
       setIsSubmitting(false);
     }
   }
@@ -153,9 +228,9 @@ export default function UnlockModal({
       }}
       className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/45 backdrop-blur-xs"
     >
-      <div className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-7 shadow-2xl border-t border-slate-200 max-h-[90dvh] overflow-y-auto">
+      <div className="w-full max-w-md rounded-t-3xl bg-white p-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-2xl border-t border-slate-200 max-h-[90dvh] overflow-y-auto">
         {/* Top drag handle + close button */}
-        <div className="relative flex items-center justify-center pb-3">
+        <div className="relative flex min-h-[44px] items-center justify-center pb-2">
           <span
             aria-hidden="true"
             className="h-1 w-10 rounded-full bg-slate-300"
@@ -164,7 +239,7 @@ export default function UnlockModal({
             type="button"
             aria-label="Close unlock modal"
             onClick={onClose}
-            className="absolute right-0 -top-1 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-800 active:scale-[0.96] transition cursor-pointer"
+            className="absolute right-0 top-0 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-800 active:scale-[0.96] transition cursor-pointer"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -199,7 +274,7 @@ export default function UnlockModal({
         <div
           role="tablist"
           aria-label="Choose unlock method"
-          className="mt-4 grid grid-cols-2 rounded-xl bg-slate-100 p-1"
+          className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1"
         >
           <button
             type="button"
@@ -209,7 +284,7 @@ export default function UnlockModal({
               setActiveOption("WHATSAPP");
               setErrorMsg(null);
             }}
-            className={`rounded-lg px-2.5 py-2 text-xs transition cursor-pointer ${
+            className={`min-h-[44px] rounded-lg px-2.5 py-2 text-xs transition cursor-pointer ${
               activeOption === "WHATSAPP"
                 ? "bg-white text-slate-900 font-semibold shadow-xs"
                 : "font-medium text-slate-600 hover:text-slate-900"
@@ -225,7 +300,7 @@ export default function UnlockModal({
               setActiveOption("CONTRIBUTE");
               setErrorMsg(null);
             }}
-            className={`rounded-lg px-2.5 py-2 text-xs transition cursor-pointer ${
+            className={`min-h-[44px] rounded-lg px-2.5 py-2 text-xs transition cursor-pointer ${
               activeOption === "CONTRIBUTE"
                 ? "bg-white text-slate-900 font-semibold shadow-xs"
                 : "font-medium text-slate-600 hover:text-slate-900"
@@ -255,28 +330,29 @@ export default function UnlockModal({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleWhatsAppShare}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.98] transition cursor-pointer"
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => onUnlocked("WHATSAPP")}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.98] transition"
             >
               <MessageCircleHeart
                 className="h-4 w-4 text-emerald-400"
                 aria-hidden="true"
               />
               Share in College WhatsApp Group
-            </button>
+            </a>
 
-            <p className="text-center text-[11px] text-slate-400">
+            <p className="text-center text-xs text-slate-500">
               Prefer sharing a Mid-Sem paper or notes? Switch to{" "}
               <button
                 type="button"
                 onClick={() => setActiveOption("CONTRIBUTE")}
-                className="font-semibold text-indigo-600 hover:underline cursor-pointer"
+                className="inline-flex min-h-[44px] items-center px-1 font-semibold text-indigo-600 hover:underline cursor-pointer"
               >
                 Contribute Paper
               </button>
-              .
             </p>
           </div>
         )}
@@ -321,7 +397,7 @@ export default function UnlockModal({
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => setResourceType(option.value)}
-                      className={`rounded-xl border px-2 py-2 text-[11px] font-semibold transition cursor-pointer ${
+                      className={`min-h-[44px] rounded-xl border px-2 py-2 text-[11px] font-semibold transition cursor-pointer ${
                         isSelected
                           ? "border-indigo-200 bg-indigo-50 text-indigo-700"
                           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
@@ -366,7 +442,7 @@ export default function UnlockModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 active:scale-[0.98] transition cursor-pointer"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 active:scale-[0.98] transition cursor-pointer"
             >
               <Send className="h-4 w-4" aria-hidden="true" />
               {isSubmitting ? "Unlocking..." : "Submit & Unlock Instantly"}

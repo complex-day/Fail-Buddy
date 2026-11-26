@@ -2,31 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Check, Sparkles } from "lucide-react";
+import { getClampedDaysLeft } from "@/lib/date";
 import type { Material, Subject } from "@/lib/supabase";
 
 interface DailyTrackerProps {
   subject: Subject;
   impMaterials: Material[];
+  todayISO?: string;
+  isUnlocked?: boolean;
 }
 
 const TOTAL_METER_BLOCKS = 10;
-
-function getClampedDaysLeft(examDate: string): number {
-  const [year, month, day] = examDate.split("-").map(Number);
-  if (!year || !month || !day) {
-    return 3;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const exam = new Date(year, month - 1, day);
-  const diffDays = Math.round(
-    (exam.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  return Math.min(7, Math.max(1, diffDays));
-}
 
 function splitIntoDayPlans(
   materials: Material[],
@@ -56,6 +42,8 @@ function splitIntoDayPlans(
 export default function DailyTracker({
   subject,
   impMaterials,
+  todayISO,
+  isUnlocked = false,
 }: DailyTrackerProps) {
   const storageKey = `fail_buddy_tracker_${subject.code}`;
   const [completedIds, setCompletedIds] = useState<number[]>([]);
@@ -67,7 +55,10 @@ export default function DailyTracker({
         const parsed: unknown = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           setCompletedIds(
-            parsed.filter((id): id is number => typeof id === "number")
+            parsed.filter(
+              (id): id is number =>
+                typeof id === "number" && Number.isInteger(id) && id > 0
+            )
           );
           return;
         }
@@ -80,7 +71,7 @@ export default function DailyTracker({
 
   const mustDoImps = impMaterials.filter((item) => item.is_must_do);
   const targetImps = mustDoImps.length > 0 ? mustDoImps : impMaterials;
-  const daysLeft = getClampedDaysLeft(subject.exam_date);
+  const daysLeft = getClampedDaysLeft(subject.exam_date, todayISO);
   const dayPlans = splitIntoDayPlans(targetImps, daysLeft);
 
   const completedSet = new Set(completedIds);
@@ -209,7 +200,7 @@ export default function DailyTracker({
 
                     <div className="min-w-0 flex-1">
                       <span
-                        className={`block text-sm font-medium leading-snug transition ${
+                        className={`block text-base font-medium leading-snug break-words transition ${
                           isChecked
                             ? "line-through text-slate-400"
                             : "text-slate-800"
@@ -219,7 +210,7 @@ export default function DailyTracker({
                       </span>
                       <span className="mt-0.5 block font-mono text-[10px] font-medium text-slate-400">
                         UNIT {item.unit}
-                        {item.is_locked ? " · LOCKED" : ""}
+                        {item.is_locked && !isUnlocked ? " · LOCKED" : ""}
                       </span>
                     </div>
                   </button>

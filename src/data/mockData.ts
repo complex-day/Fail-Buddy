@@ -1,47 +1,43 @@
+import { getFutureUTCDateISO } from "@/lib/date";
 import type { Material, Subject } from "@/lib/supabase";
 
-function getFutureDateISO(daysFromToday: number): string {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() + daysFromToday);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+/** Builds mock GTU subjects with exam dates computed dynamically from UTC today. */
+export function getMockSubjects(): Subject[] {
+  return [
+    {
+      code: "3130702",
+      name: "Data Structures",
+      branch: "CSE",
+      semester: 3,
+      exam_date: getFutureUTCDateISO(6),
+      passing_target: "12/30 Marks",
+      topper_name: "Priya Patel (9.4 SPI)",
+      unlocked_by: ["Meet", "Rohan", "Diya"],
+    },
+    {
+      code: "3130703",
+      name: "Database Management Systems",
+      branch: "CSE",
+      semester: 3,
+      exam_date: getFutureUTCDateISO(9),
+      passing_target: "12/30 Marks",
+      topper_name: "Rohan Sharma (9.2 SPI)",
+      unlocked_by: ["Karan", "Neha"],
+    },
+    {
+      code: "3130704",
+      name: "Digital Fundamentals",
+      branch: "IT",
+      semester: 3,
+      exam_date: getFutureUTCDateISO(12),
+      passing_target: "12/30 Marks",
+      topper_name: "Aarav Shah (9.1 SPI)",
+      unlocked_by: ["Dev"],
+    },
+  ];
 }
 
-export const MOCK_SUBJECTS: Subject[] = [
-  {
-    code: "3130702",
-    name: "Data Structures",
-    branch: "CSE",
-    semester: 3,
-    exam_date: getFutureDateISO(6),
-    passing_target: "12/30 Marks",
-    topper_name: "Priya Patel (9.4 SPI)",
-    unlocked_by: ["Meet", "Rohan", "Diya"],
-  },
-  {
-    code: "3130703",
-    name: "Database Management Systems",
-    branch: "CSE",
-    semester: 3,
-    exam_date: getFutureDateISO(9),
-    passing_target: "12/30 Marks",
-    topper_name: "Rohan Sharma (9.2 SPI)",
-    unlocked_by: ["Karan", "Neha"],
-  },
-  {
-    code: "3130704",
-    name: "Digital Fundamentals",
-    branch: "IT",
-    semester: 3,
-    exam_date: getFutureDateISO(12),
-    passing_target: "12/30 Marks",
-    topper_name: "Aarav Shah (9.1 SPI)",
-    unlocked_by: ["Dev"],
-  },
-];
+export const MOCK_SUBJECTS: Subject[] = getMockSubjects();
 
 export const MOCK_MATERIALS: Material[] = [
   // 3130702 — Data Structures: 8 IMPs (6 unlocked, 2 locked) + 2 Assignments (1 unlocked, 1 locked)

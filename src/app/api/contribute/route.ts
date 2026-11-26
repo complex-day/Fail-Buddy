@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { getMockSubjects } from "@/data/mockData";
 import {
   isSupabaseConfigured,
   supabase,
   type Contribution,
 } from "@/lib/supabase";
 
+const MAX_BODY_BYTES = 4096;
 const VALID_RESOURCE_TYPES = ["MID_PAPER", "ASSIGNMENT", "NOTES"] as const;
 type ResourceType = Contribution["resource_type"];
 
@@ -95,9 +97,38 @@ function validateContributionBody(
 
 /** Handles student paper/note contribution submissions for a subject. */
 export async function POST(request: Request) {
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader !== null) {
+    const contentLength = Number(contentLengthHeader);
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json(
+        { error: "Submission is too large. Please keep it under 4 KB." },
+        { status: 413 }
+      );
+    }
+  }
+
+  let rawText: string;
+  try {
+    rawText = await request.text();
+  } catch {
+    return NextResponse.json(
+      { error: "Unable to read request body." },
+      { status: 400 }
+    );
+  }
+
+  const byteLength = new TextEncoder().encode(rawText).byteLength;
+  if (byteLength > MAX_BODY_BYTES) {
+    return NextResponse.json(
+      { error: "Submission is too large. Please keep it under 4 KB." },
+      { status: 413 }
+    );
+  }
+
   let rawBody: unknown;
   try {
-    rawBody = await request.json();
+    rawBody = JSON.parse(rawText) as unknown;
   } catch {
     return NextResponse.json(
       { error: "Invalid JSON payload." },
@@ -114,6 +145,30 @@ export async function POST(request: Request) {
 
   if (isSupabaseConfigured) {
     try {
+      const { data: subjectRow, error: subjectError } = await supabase
+        .from("subjects")
+        .select("code")
+        .eq("code", contribution.subject_code)
+        .maybeSingle();
+
+      if (subjectError) {
+        console.error(
+          "[/api/contribute] Supabase subject lookup error:",
+          subjectError
+        );
+        return NextResponse.json(
+          { error: "Could not save contribution right now. Please try again." },
+          { status: 500 }
+        );
+      }
+
+      if (!subjectRow) {
+        return NextResponse.json(
+          { error: "Unknown subject code." },
+          { status: 400 }
+        );
+      }
+
       const { error } = await supabase
         .from("contributions")
         .insert([contribution]);
@@ -136,6 +191,19 @@ export async function POST(request: Request) {
     }
   }
 
-  console.info("[/api/contribute] Mock contribution saved:", contribution);
+  const isKnownMockSubject = getMockSubjects().some(
+    (subject) => subject.code === contribution.subject_code
+  );
+  if (!isKnownMockSubject) {
+    return NextResponse.json(
+      { error: "Unknown subject code." },
+      { status: 400 }
+    );
+  }
+
+  console.info("[/api/contribute] Mock contribution saved:", {
+    subject_code: contribution.subject_code,
+    resource_type: contribution.resource_type,
+  });
   return NextResponse.json({ ok: true, mode: "mock" }, { status: 201 });
 }

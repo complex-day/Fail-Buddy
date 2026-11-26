@@ -1,10 +1,11 @@
 import { BadgeCheck, MessageCircleHeart } from "lucide-react";
 import HomeSubjectExplorer from "@/components/HomeSubjectExplorer";
 import { getSubjects } from "@/lib/data";
+import { getTodayUTCISO } from "@/lib/date";
 
-const WHATSAPP_SHARE_TEXT = encodeURIComponent(
-  "Zero Fail GTU Passing Kit! Get verified IMPs, Assignment answers & Topper Notes with zero login on Fail Buddy:"
-);
+export const dynamic = "force-dynamic";
+
+const DEFAULT_SITE_URL = "https://fail-buddy.vercel.app";
 
 function PixelShieldFlameIcon() {
   return (
@@ -35,7 +36,12 @@ function PixelShieldFlameIcon() {
 
 export default async function HomePage() {
   const subjects = await getSubjects();
-  const whatsappShareUrl = `https://wa.me/?text=${WHATSAPP_SHARE_TEXT}`;
+  const todayISO = getTodayUTCISO();
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL
+  ).trim() || DEFAULT_SITE_URL;
+  const shareText = `Zero Fail GTU Passing Kit! Get verified IMPs, Assignment answers & Topper Notes with zero login on Fail Buddy: ${siteUrl}`;
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
   return (
     <div className="min-h-dvh bg-pixel-canvas text-slate-900">
@@ -84,16 +90,16 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <HomeSubjectExplorer subjects={subjects} />
+        <HomeSubjectExplorer subjects={subjects} todayISO={todayISO} />
       </main>
 
-      <div className="fixed bottom-4 inset-x-0 z-20 px-4 pointer-events-none">
+      <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-0 z-20 px-4 pointer-events-none">
         <div className="max-w-md mx-auto pointer-events-auto">
           <a
             href={whatsappShareUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900/95 backdrop-blur-md px-4 py-3.5 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(15,23,42,0.45)] ring-1 ring-white/10 active:scale-[0.98] transition"
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-slate-900/95 backdrop-blur-md px-4 py-3.5 text-sm font-semibold text-white shadow-[0_12px_32px_-8px_rgba(15,23,42,0.45)] ring-1 ring-white/10 active:scale-[0.98] transition"
           >
             <MessageCircleHeart
               className="h-4 w-4 text-emerald-400"
