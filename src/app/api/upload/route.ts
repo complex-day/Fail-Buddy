@@ -40,19 +40,14 @@ function isAllowedMimeType(value: string): value is AllowedMimeType {
 
 function sanitizeFileName(rawName: string, mimeType: AllowedMimeType): string {
   const baseName = rawName.split(/[/\\]/).pop() ?? "";
-  const cleaned = baseName
-    .trim()
-    .toLowerCase()
+  const stemWithoutExt = baseName.trim().toLowerCase().replace(/\.[^/.]+$/, "");
+  const cleaned = stemWithoutExt
     .replace(/[^a-z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^[.-]+|[.-]+$/g, "");
 
   const ext = MIME_TO_EXT[mimeType];
-  if (!cleaned) {
-    return `upload.${ext}`;
-  }
-
-  const truncated = cleaned.slice(0, 80);
-  return truncated.includes(".") ? truncated : `${truncated}.${ext}`;
+  const stem = cleaned.slice(0, 70).replace(/[.-]+$/g, "") || "upload";
+  return `${stem}.${ext}`;
 }
 
 /** Handles multipart PDF/photo uploads to Supabase Storage + contributions table. */

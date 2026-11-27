@@ -92,6 +92,10 @@ export default function UploadMaterialModal({
   const fileInputId = useId();
 
   useEffect(() => {
+    setSubjectCode(defaultSubjectCode || subjects[0]?.code || "");
+  }, [isOpen, defaultSubjectCode, subjects]);
+
+  useEffect(() => {
     if (!isOpen) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -104,7 +108,6 @@ export default function UploadMaterialModal({
       return;
     }
 
-    setSubjectCode(defaultSubjectCode || subjects[0]?.code || "");
     setErrorMsg(null);
     setIsSuccess(false);
 
@@ -130,7 +133,7 @@ export default function UploadMaterialModal({
         abortControllerRef.current = null;
       }
     };
-  }, [isOpen, defaultSubjectCode, subjects, onClose]);
+  }, [isOpen, onClose]);
 
   if (!isOpen) {
     return null;
