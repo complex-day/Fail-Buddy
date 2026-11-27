@@ -49,3 +49,10 @@
   filter: blur(28px);
   pointer-events: none;
 }
+
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding: 0.25rem 0;
+}

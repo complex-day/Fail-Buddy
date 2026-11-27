@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ShieldCheck } from "lucide-react";
 import { formatCountdownBadge } from "@/lib/date";
 import type { Subject } from "@/lib/supabase";
 
@@ -81,12 +81,18 @@ export default function SubjectCard({ subject, todayISO }: SubjectCardProps) {
         </div>
       </div>
 
-      {/* Row 4: Honest exam pattern metadata + CTA */}
+      {/* Row 4: Topper verification + CTA */}
       <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
-        <span className="text-slate-500 font-medium">
-          GTU External · 70 Marks
-        </span>
-        <span className="font-semibold text-emerald-700">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <ShieldCheck
+            className="h-3.5 w-3.5 text-indigo-600 shrink-0"
+            aria-hidden="true"
+          />
+          <span className="truncate text-slate-600 font-medium">
+            Verified by {subject.topper_name}
+          </span>
+        </div>
+        <span className="shrink-0 font-semibold text-emerald-700">
           Open Passing Kit
         </span>
       </div>

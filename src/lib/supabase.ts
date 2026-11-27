@@ -8,6 +8,7 @@ export type Subject = {
   exam_date: string;
   passing_target: string;
   topper_name: string;
+  topper_guidance?: string | null;
   unlocked_by: string[];
 };
 

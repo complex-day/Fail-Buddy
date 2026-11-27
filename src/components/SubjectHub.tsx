@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  BookOpenCheck,
   CheckCircle2,
+  ChevronDown,
   Lock,
   LockOpen,
   Plus,
@@ -13,9 +15,16 @@ import {
 import { formatCountdownBadge } from "@/lib/date";
 import type { Material, Subject } from "@/lib/supabase";
 import DailyTracker from "@/components/DailyTracker";
+import FormattedContent from "@/components/FormattedContent";
 import ImpAccordion from "@/components/ImpAccordion";
 import UnlockModal from "@/components/UnlockModal";
 import UploadMaterialModal from "@/components/UploadMaterialModal";
+
+const DEFAULT_TOPPER_GUIDANCE = [
+  "• **Attempt Q1 (compulsory short questions) cleanly** — concise 2–3 line definitions, formulas, and complexities secure quick baseline marks.",
+  "• **Draw neat labeled diagrams & step tables** for 4-mark and 7-mark questions; GTU examiners award generous step marks for visual traces even when explanations are brief.",
+  "• **Lock 23/70 safely:** Master every **Must-Do IMP** below first, box key formulas, and never leave any sub-question completely blank.",
+].join("\n");
 
 interface SubjectHubProps {
   subject: Subject;
@@ -94,6 +103,8 @@ export default function SubjectHub({
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
+  const guidanceId = useId();
 
   const countdown = formatCountdownBadge(subject.exam_date, todayISO);
 
@@ -177,9 +188,9 @@ export default function SubjectHub({
           </div>
         </header>
 
-        {/* Optical Lens GTU External Strip */}
+        {/* Optical Lens Topper Verification Strip */}
         <section
-          aria-label="GTU external exam metadata"
+          aria-label="Topper verification and GTU external metadata"
           className="mt-3 relative overflow-hidden rounded-2xl"
         >
           <div aria-hidden="true" className="absolute -inset-4 lens-orb" />
@@ -189,8 +200,8 @@ export default function SubjectHub({
               aria-hidden="true"
             />
             <p className="text-[12.5px] leading-snug font-medium text-slate-700">
-              GTU External (70 Marks) • Target: {subject.passing_target} • PYQ
-              Pattern
+              Verified by {subject.topper_name} • GTU External (
+              {subject.passing_target})
             </p>
           </div>
         </section>
@@ -238,6 +249,46 @@ export default function SubjectHub({
         {/* Tab 1: Passing Kit */}
         {activeTab === "PASSING_KIT" && (
           <section aria-label="Zero-Fail Passing Kit" className="mt-4">
+            {/* Collapsible Topper Guidance Card */}
+            <div className="mb-3 card-elevated rounded-2xl overflow-hidden">
+              <button
+                type="button"
+                aria-expanded={isGuidanceOpen}
+                aria-controls={guidanceId}
+                onClick={() => setIsGuidanceOpen((prev) => !prev)}
+                className="flex min-h-[44px] w-full items-center justify-between gap-2.5 px-4 py-3 text-left hover:bg-slate-50/70 active:bg-slate-50 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <BookOpenCheck
+                    className="h-4 w-4 shrink-0 text-indigo-600"
+                    aria-hidden="true"
+                  />
+                  <span className="text-[13.5px] font-bold text-slate-900 leading-snug">
+                    Topper Guidance — How to Score 23/70 Easily
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                    isGuidanceOpen ? "rotate-180 text-slate-700" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {isGuidanceOpen && (
+                <div
+                  id={guidanceId}
+                  className="border-t border-slate-100 bg-slate-50/50 px-4 py-3.5"
+                >
+                  <FormattedContent
+                    content={
+                      subject.topper_guidance?.trim() || DEFAULT_TOPPER_GUIDANCE
+                    }
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center justify-between gap-2">
               <button
                 type="button"

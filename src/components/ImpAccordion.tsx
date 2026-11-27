@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import FormattedContent from "@/components/FormattedContent";
 import TopperTipCard from "@/components/TopperTipCard";
 import type { Material } from "@/lib/supabase";
 
@@ -53,9 +54,7 @@ export default function ImpAccordion({
           id={panelId}
           className="border-t border-slate-100 px-4 pt-3.5 pb-4 bg-slate-50/40"
         >
-          <p className="min-w-0 break-words text-base leading-relaxed text-slate-700 whitespace-pre-line">
-            {material.answer}
-          </p>
+          <FormattedContent content={material.answer} />
 
           <TopperTipCard tip={material.topper_tip} />
         </div>

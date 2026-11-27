@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Sparkles } from "lucide-react";
+import { Check, CheckCircle2 } from "lucide-react";
 import { getClampedDaysLeft } from "@/lib/date";
 import type { Material, Subject } from "@/lib/supabase";
 
@@ -143,7 +143,7 @@ export default function DailyTracker({
 
         {doneCount === totalCount && (
           <div className="mt-3 flex items-center gap-1.5 rounded-xl border border-emerald-200/80 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
-            <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             All Must-Do IMPs cleared — you&apos;re ready to pass {subject.code}!
           </div>
         )}

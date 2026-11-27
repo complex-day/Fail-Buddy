@@ -3,9 +3,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
   CheckCircle2,
+  LockOpen,
   MessageCircleHeart,
   Send,
-  Sparkles,
   X,
 } from "lucide-react";
 import type { Contribution, Subject } from "@/lib/supabase";
@@ -247,7 +247,7 @@ export default function UnlockModal({
         {/* Header */}
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-200/80 bg-purple-50 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-purple-700">
-            <Sparkles
+            <LockOpen
               className="h-3 w-3 text-emerald-600"
               aria-hidden="true"
             />

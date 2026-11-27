@@ -6,8 +6,8 @@ import {
   FileText,
   Image as ImageIcon,
   Send,
-  Sparkles,
   Upload,
+  UploadCloud,
   X,
 } from "lucide-react";
 import type { Subject } from "@/lib/supabase";
@@ -305,7 +305,7 @@ export default function UploadMaterialModal({
         {/* Header */}
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">
-            <Sparkles
+            <UploadCloud
               className="h-3 w-3 text-emerald-600"
               aria-hidden="true"
             />
