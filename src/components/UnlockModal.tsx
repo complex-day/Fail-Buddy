@@ -26,9 +26,8 @@ type ResourceType = Contribution["resource_type"];
 const SUBMIT_TIMEOUT_MS = 12_000;
 
 const RESOURCE_OPTIONS: { value: ResourceType; label: string }[] = [
-  { value: "MID_PAPER", label: "Mid-Sem Paper" },
-  { value: "ASSIGNMENT", label: "Assignment" },
-  { value: "NOTES", label: "Topper Notes" },
+  { value: "MID_PAPER", label: "GTU Past Paper" },
+  { value: "NOTES", label: "Notes / IMPs" },
 ];
 
 function isOkPayload(data: unknown): boolean {
@@ -102,7 +101,7 @@ export default function UnlockModal({
   }
 
   const shareMessage = [
-    `Bhai/Behen, ${subject.name} (${subject.code}) ka Zero Fail GTU Passing Kit + Topper Notes mil gaya (no login)!`,
+    `Bhai/Behen, ${subject.name} (${subject.code}) ka GTU External 23/70 Passing Kit + IMPs mil gaya (no login)!`,
     shareUrl,
   ]
     .filter(Boolean)
@@ -259,14 +258,14 @@ export default function UnlockModal({
             id={titleId}
             className="mt-2.5 text-lg font-extrabold tracking-tight text-slate-900"
           >
-            Unlock All IMPs &amp; Assignments
+            Unlock All GTU IMPs
           </h2>
           <p className="mt-1 text-sm text-slate-500 leading-snug">
-            Zero rupees, zero login. Help 1 classmate to unlock everything for{" "}
+            Zero rupees, zero login. Help 1 classmate to unlock the full{" "}
             <span className="font-mono font-semibold text-slate-700">
               {subject.code}
-            </span>
-            .
+            </span>{" "}
+            passing kit.
           </p>
         </div>
 
@@ -323,7 +322,7 @@ export default function UnlockModal({
                   <p className="font-semibold">Instant 1-Tap Barter</p>
                   <p className="mt-0.5 text-emerald-800/90">
                     Share {subject.name} ({subject.code}) with your college
-                    group so classmates don&apos;t get a KT — everything unlocks
+                    group so classmates pass GTU External — everything unlocks
                     right away.
                   </p>
                 </div>
@@ -345,7 +344,7 @@ export default function UnlockModal({
             </a>
 
             <p className="text-center text-xs text-slate-500">
-              Prefer sharing a Mid-Sem paper or notes? Switch to{" "}
+              Prefer sharing a GTU past paper or notes? Switch to{" "}
               <button
                 type="button"
                 onClick={() => setActiveOption("CONTRIBUTE")}
@@ -357,7 +356,7 @@ export default function UnlockModal({
           </div>
         )}
 
-        {/* Option 2: Contribute Paper / Notes (Class Savior) */}
+        {/* Option 2: Contribute Paper / Notes */}
         {activeOption === "CONTRIBUTE" && (
           <form
             onSubmit={handleContributeSubmit}
@@ -388,7 +387,7 @@ export default function UnlockModal({
               <span className="block text-xs font-semibold text-slate-700">
                 Resource Type
               </span>
-              <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
                 {RESOURCE_OPTIONS.map((option) => {
                   const isSelected = resourceType === option.value;
                   return (
@@ -397,7 +396,7 @@ export default function UnlockModal({
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => setResourceType(option.value)}
-                      className={`min-h-[44px] rounded-xl border px-2 py-2 text-[11px] font-semibold transition cursor-pointer ${
+                      className={`min-h-[44px] rounded-xl border px-3 py-2 text-xs font-semibold transition cursor-pointer ${
                         isSelected
                           ? "border-indigo-200 bg-indigo-50 text-indigo-700"
                           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
@@ -425,7 +424,7 @@ export default function UnlockModal({
                   setResourceValue(event.target.value);
                   if (errorMsg) setErrorMsg(null);
                 }}
-                placeholder="Paste Drive link or share a repeated mid-sem question / quick tip..."
+                placeholder="Paste Drive link or share a repeated GTU question / quick tip..."
                 className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none transition"
               />
             </div>

@@ -5,14 +5,12 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
-  FileText,
   Lock,
   LockOpen,
   ShieldCheck,
 } from "lucide-react";
 import { formatCountdownBadge } from "@/lib/date";
 import type { Material, Subject } from "@/lib/supabase";
-import AssignmentCard from "@/components/AssignmentCard";
 import DailyTracker from "@/components/DailyTracker";
 import ImpAccordion from "@/components/ImpAccordion";
 import UnlockModal from "@/components/UnlockModal";
@@ -23,11 +21,10 @@ interface SubjectHubProps {
   todayISO?: string;
 }
 
-type HubTab = "PASSING_KIT" | "ASSIGNMENTS" | "DAILY_PLAN";
+type HubTab = "PASSING_KIT" | "DAILY_PLAN";
 
 const TABS: { id: HubTab; label: string }[] = [
   { id: "PASSING_KIT", label: "Passing Kit" },
-  { id: "ASSIGNMENTS", label: "Assignments" },
   { id: "DAILY_PLAN", label: "Daily Plan" },
 ];
 
@@ -37,21 +34,15 @@ interface LockedMaterialCardProps {
 }
 
 function LockedMaterialCard({ material, onUnlock }: LockedMaterialCardProps) {
-  const isAssignment = material.type === "ASSIGNMENT";
-  const unitLabel = isAssignment
-    ? `ASSIGNMENT · UNIT ${material.unit}`
-    : `UNIT ${material.unit}`;
-  const badgeLabel = isAssignment ? "Locked Assignment" : "Locked IMP";
-
   return (
     <article className="card-elevated rounded-2xl p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-[11px] font-semibold text-slate-500">
-          {unitLabel}
+          UNIT {material.unit}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full border border-purple-200/80 bg-purple-50 px-2.5 py-0.5 text-[11px] font-semibold text-purple-700">
           <Lock className="h-3 w-3" aria-hidden="true" />
-          {badgeLabel}
+          Locked IMP
         </span>
       </div>
 
@@ -60,18 +51,18 @@ function LockedMaterialCard({ material, onUnlock }: LockedMaterialCardProps) {
           <Lock className="h-4 w-4" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-bold text-slate-900 leading-snug">
+          <h3 className="break-words text-[15px] font-bold text-slate-900 leading-snug">
             {material.question}
           </h3>
           <p className="mt-1 text-xs text-slate-500">
-            {material.proof_tag} • Full answer &amp; topper tip locked
+            {material.proof_tag} • Full answer &amp; exam tip locked
           </p>
         </div>
       </div>
 
       <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
         <span className="text-xs font-medium text-slate-500">
-          Share 1 note or mid-sem paper
+          Share 1 GTU past paper or note
         </span>
         <button
           type="button"
@@ -104,13 +95,10 @@ export default function SubjectHub({
   const countdown = formatCountdownBadge(subject.exam_date, todayISO);
 
   const impMaterials = materials.filter((item) => item.type === "IMP");
-  const assignmentMaterials = materials.filter(
-    (item) => item.type === "ASSIGNMENT"
-  );
   const visibleImps = mustDoOnly
     ? impMaterials.filter((item) => item.is_must_do)
     : impMaterials;
-  const lockedMaterials = materials.filter((item) => item.is_locked);
+  const lockedMaterials = impMaterials.filter((item) => item.is_locked);
 
   useEffect(() => {
     try {
@@ -175,9 +163,9 @@ export default function SubjectHub({
           </span>
         </header>
 
-        {/* Optical Lens Topper Strip */}
+        {/* Optical Lens GTU External Strip */}
         <section
-          aria-label="Topper verification"
+          aria-label="GTU external exam metadata"
           className="mt-3 relative overflow-hidden rounded-2xl"
         >
           <div aria-hidden="true" className="absolute -inset-4 lens-orb" />
@@ -187,7 +175,8 @@ export default function SubjectHub({
               aria-hidden="true"
             />
             <p className="text-[12.5px] leading-snug font-medium text-slate-700">
-              Verified by {subject.topper_name} • Assignments &amp; Past Papers
+              GTU External (70 Marks) • Target: {subject.passing_target} • PYQ
+              Pattern
             </p>
           </div>
         </section>
@@ -205,9 +194,9 @@ export default function SubjectHub({
           </div>
         )}
 
-        {/* 3-Tab Segmented Switcher */}
+        {/* 2-Tab Segmented Switcher */}
         <div
-          className="mt-4 grid grid-cols-3 rounded-xl bg-slate-200/70 p-1"
+          className="mt-4 grid grid-cols-2 rounded-xl bg-slate-200/70 p-1"
           role="tablist"
           aria-label="Subject study sections"
         >
@@ -311,39 +300,7 @@ export default function SubjectHub({
           </section>
         )}
 
-        {/* Tab 2: Assignments */}
-        {activeTab === "ASSIGNMENTS" && (
-          <section aria-label="Assignment Solutions" className="mt-4 space-y-3">
-            {assignmentMaterials.length > 0 ? (
-              assignmentMaterials.map((material) =>
-                material.is_locked && !isUnlocked ? (
-                  <LockedMaterialCard
-                    key={material.id}
-                    material={material}
-                    onUnlock={() => setIsUnlockModalOpen(true)}
-                  />
-                ) : (
-                  <AssignmentCard key={material.id} material={material} />
-                )
-              )
-            ) : (
-              <div className="card-elevated rounded-2xl p-6 text-center">
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/80">
-                  <FileText className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h2 className="mt-3 text-base font-bold text-slate-900">
-                  No assignments added yet
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Verified college assignment solutions for {subject.code} will
-                  appear here once contributed.
-                </p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Tab 3: Anti-Panic Daily Tracker */}
+        {/* Tab 2: Anti-Panic Daily Tracker */}
         {activeTab === "DAILY_PLAN" && (
           <section aria-label="Anti-Panic Daily Tracker" className="mt-4">
             <DailyTracker

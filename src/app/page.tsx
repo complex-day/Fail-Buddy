@@ -37,10 +37,10 @@ function PixelShieldFlameIcon() {
 export default async function HomePage() {
   const subjects = await getSubjects();
   const todayISO = getTodayUTCISO();
-  const siteUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL
-  ).trim() || DEFAULT_SITE_URL;
-  const shareText = `Zero Fail GTU Passing Kit! Get verified IMPs, Assignment answers & Topper Notes with zero login on Fail Buddy: ${siteUrl}`;
+  const siteUrl =
+    (process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL).trim() ||
+    DEFAULT_SITE_URL;
+  const shareText = `GTU External 23/70 Passing Kit! Get high-frequency PYQs & syllabus-mapped IMPs with zero login on Fail Buddy: ${siteUrl}`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
   return (
@@ -56,7 +56,7 @@ export default async function HomePage() {
                 Fail Buddy
               </h1>
               <p className="text-xs font-medium text-slate-500">
-                Zero Fail GTU Kit
+                GTU External · 23/70 Passing Kit
               </p>
             </div>
           </div>
@@ -74,18 +74,15 @@ export default async function HomePage() {
           aria-label="Verification trust strip"
           className="mt-4 relative overflow-hidden rounded-2xl"
         >
-          <div
-            aria-hidden="true"
-            className="absolute -inset-4 lens-orb"
-          />
+          <div aria-hidden="true" className="absolute -inset-4 lens-orb" />
           <div className="relative rounded-2xl lens-glass px-3.5 py-3 flex items-center gap-2.5">
             <BadgeCheck
               className="h-4 w-4 shrink-0 text-indigo-600"
               aria-hidden="true"
             />
             <p className="text-[13px] leading-snug font-medium text-slate-700">
-              Verified from College Assignments, Past Mid-Sem Papers &amp;
-              Topper Notes
+              GTU External Exam Prep — High-Frequency PYQs &amp; Syllabus-Mapped
+              Passing Kit
             </p>
           </div>
         </section>

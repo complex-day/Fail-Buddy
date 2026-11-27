@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, ShieldCheck } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { formatCountdownBadge } from "@/lib/date";
 import type { Subject } from "@/lib/supabase";
 
@@ -9,16 +9,11 @@ interface SubjectCardProps {
 }
 
 const TOTAL_METER_BLOCKS = 10;
-const FILLED_METER_BLOCKS = 4;
-
-function getStudyingCount(subject: Subject): number {
-  const codeTail = Number(subject.code.slice(-2)) || 10;
-  return 24 + subject.unlocked_by.length * 11 + (codeTail % 9);
-}
+// 23/70 external passing target (~33%) represented cleanly on a 10-block meter
+const FILLED_METER_BLOCKS = 3;
 
 export default function SubjectCard({ subject, todayISO }: SubjectCardProps) {
   const countdown = formatCountdownBadge(subject.exam_date, todayISO);
-  const studyingCount = getStudyingCount(subject);
 
   return (
     <Link
@@ -65,7 +60,7 @@ export default function SubjectCard({ subject, todayISO }: SubjectCardProps) {
       <div className="mt-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold text-slate-700">
-            Passing Kit
+            External Passing Target
           </span>
           <span className="font-mono text-[11px] font-semibold text-emerald-700">
             {subject.passing_target}
@@ -86,25 +81,14 @@ export default function SubjectCard({ subject, todayISO }: SubjectCardProps) {
         </div>
       </div>
 
-      {/* Row 4: Topper verification + active students */}
+      {/* Row 4: Honest exam pattern metadata + CTA */}
       <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <ShieldCheck
-            className="h-3.5 w-3.5 shrink-0 text-indigo-600"
-            aria-hidden="true"
-          />
-          <span className="truncate text-slate-600 font-medium">
-            Verified by {subject.topper_name}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0 text-slate-500 font-medium">
-          <span className="relative flex h-2 w-2" aria-hidden="true">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-          <span>{studyingCount} active</span>
-        </div>
+        <span className="text-slate-500 font-medium">
+          GTU External · 70 Marks
+        </span>
+        <span className="font-semibold text-emerald-700">
+          Open Passing Kit
+        </span>
       </div>
     </Link>
   );

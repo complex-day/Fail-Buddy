@@ -31,13 +31,12 @@ export default function SubjectLoading() {
           </div>
         </section>
 
-        {/* 3-Tab Switcher Skeleton */}
+        {/* 2-Tab Switcher Skeleton */}
         <div
           aria-hidden="true"
-          className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-200/70 p-1"
+          className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-slate-200/70 p-1"
         >
           <div className="h-7 rounded-lg bg-white/90 animate-pulse" />
-          <div className="h-7 rounded-lg bg-slate-200/60 animate-pulse" />
           <div className="h-7 rounded-lg bg-slate-200/60 animate-pulse" />
         </div>
 
