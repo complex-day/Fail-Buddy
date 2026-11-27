@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { getMockSubjects } from "@/data/mockData";
+import {
+  validateTrimmedString,
+  verifySubjectExists,
+  type ValidationResult,
+} from "@/lib/contributionValidation";
 import {
   isSupabaseConfigured,
   supabase,
@@ -10,10 +14,6 @@ const MAX_BODY_BYTES = 4096;
 const VALID_RESOURCE_TYPES = ["MID_PAPER", "ASSIGNMENT", "NOTES"] as const;
 type ResourceType = Contribution["resource_type"];
 
-type ValidationResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -23,27 +23,6 @@ function isValidResourceType(value: unknown): value is ResourceType {
     typeof value === "string" &&
     (VALID_RESOURCE_TYPES as readonly string[]).includes(value)
   );
-}
-
-function validateTrimmedString(
-  value: unknown,
-  fieldName: string,
-  minLen: number,
-  maxLen: number
-): ValidationResult<string> {
-  if (typeof value !== "string") {
-    return { ok: false, error: `${fieldName} must be a non-empty string.` };
-  }
-
-  const trimmed = value.trim();
-  if (trimmed.length < minLen || trimmed.length > maxLen) {
-    return {
-      ok: false,
-      error: `${fieldName} must be between ${minLen} and ${maxLen} characters.`,
-    };
-  }
-
-  return { ok: true, data: trimmed };
 }
 
 function validateContributionBody(
@@ -143,32 +122,22 @@ export async function POST(request: Request) {
 
   const contribution = validation.data;
 
-  if (isSupabaseConfigured) {
-    try {
-      const { data: subjectRow, error: subjectError } = await supabase
-        .from("subjects")
-        .select("code")
-        .eq("code", contribution.subject_code)
-        .maybeSingle();
+  try {
+    const subjectCheck = await verifySubjectExists(contribution.subject_code);
+    if (subjectCheck.dbError) {
+      return NextResponse.json(
+        { error: "Could not save contribution right now. Please try again." },
+        { status: 500 }
+      );
+    }
+    if (!subjectCheck.exists) {
+      return NextResponse.json(
+        { error: "Unknown subject code." },
+        { status: 400 }
+      );
+    }
 
-      if (subjectError) {
-        console.error(
-          "[/api/contribute] Supabase subject lookup error:",
-          subjectError
-        );
-        return NextResponse.json(
-          { error: "Could not save contribution right now. Please try again." },
-          { status: 500 }
-        );
-      }
-
-      if (!subjectRow) {
-        return NextResponse.json(
-          { error: "Unknown subject code." },
-          { status: 400 }
-        );
-      }
-
+    if (isSupabaseConfigured) {
       const { error } = await supabase
         .from("contributions")
         .insert([contribution]);
@@ -182,22 +151,12 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json({ ok: true, mode: "supabase" }, { status: 201 });
-    } catch (err) {
-      console.error("[/api/contribute] Unexpected Supabase error:", err);
-      return NextResponse.json(
-        { error: "Could not save contribution right now. Please try again." },
-        { status: 500 }
-      );
     }
-  }
-
-  const isKnownMockSubject = getMockSubjects().some(
-    (subject) => subject.code === contribution.subject_code
-  );
-  if (!isKnownMockSubject) {
+  } catch (err) {
+    console.error("[/api/contribute] Unexpected error:", err);
     return NextResponse.json(
-      { error: "Unknown subject code." },
-      { status: 400 }
+      { error: "Could not save contribution right now. Please try again." },
+      { status: 500 }
     );
   }
 

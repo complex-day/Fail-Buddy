@@ -305,3 +305,34 @@ select setval(
   coalesce((select max(id) from public.materials), 1),
   true
 );
+
+-- 5. Storage Bucket for Student PDF/Photo Uploads
+insert into storage.buckets (
+  id,
+  name,
+  public,
+  file_size_limit,
+  allowed_mime_types
+)
+values (
+  'student-uploads',
+  'student-uploads',
+  true,
+  10485760,
+  array['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do nothing;
+
+drop policy if exists "Allow anon insert to student-uploads" on storage.objects;
+create policy "Allow anon insert to student-uploads"
+  on storage.objects
+  for insert
+  to anon
+  with check (bucket_id = 'student-uploads');
+
+drop policy if exists "Allow anon select from student-uploads" on storage.objects;
+create policy "Allow anon select from student-uploads"
+  on storage.objects
+  for select
+  to anon
+  using (bucket_id = 'student-uploads');
