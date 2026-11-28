@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
@@ -40,6 +41,7 @@ export default function RootLayout({
     >
       <body className="font-sans bg-[#F8FAFC] text-slate-900 min-h-dvh antialiased selection:bg-emerald-100 selection:text-emerald-900">
         {children}
+        <Analytics />
       </body>
     </html>
   );
